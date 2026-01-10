@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Radio Underground • Сонячна Симфонія V3.9</title>
+    <style>
+        :root {
+            --bg-color: #050510;
+            --panel-bg: rgba(14, 14, 22, 0.95);
+            --text-main: #aaccff;
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #00ff66;
+            --neon-amber: #ffaa00;
+            --neon-red: #ff3333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                height: auto;
+                overflow-y: auto;
+                padding: 10px;
+                display: block;
+            }
+        }
+
+        #star-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1b1b2f 0%, #000 100%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            z-index: 10;
+            transform-origin: center;
+        }
+
+        .rack-mount {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid #333;
+            border-radius: 4px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 2px solid #222;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .version {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .layout-row {
+            display: flex;
+            gap: 8px;
+            height: 100%;
+        }
+
+        .col-main {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .col-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 250px;
+        }
+
+        .section-box {
+            border: 1px solid #333;
+            background: #080810;
+            padding: 8px;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 0.6rem;
+            color: #555;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #222;
+        }
+
+        /* DATA */
+        .transport-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .btn-transport {
+            flex: 1;
+            padding: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        #playBtn {
+            background: #2b0055;
+            border: 1px solid var(--neon-purple);
+        }
+
+        #stopBtn {
+            background: #550000;
+            border: 1px solid var(--neon-red);
+        }
+
+        .data-matrix {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+            font-size: 0.65rem;
+        }
+
+        .data-item {
+            background: #0e0e15;
+            padding: 3px;
+            border-radius: 2px;
+            text-align: center;
+        }
+
+        .data-val {
+            color: var(--neon-green);
+            font-family: 'Share Tech Mono';
+            display: block;
+            font-size: 0.8rem;
+        }
+
+        .data-offline {
+            color: var(--neon-red);
+        }
+
+        /* FX GRID */
+        .fx-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+        }
+
+        .fx-unit {
+            background: #101018;
+            border: 1px solid #333;
+            padding: 4px;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 80px;
+            justify-content: space-between;
+            min-width: 0;
+            /* Allow shrinking */
+        }
+
+        .fx-name {
+            font-size: 0.5rem;
+            color: #777;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 2px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .knob-row {
+            display: flex;
+            gap: 2px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .knob-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            align-items: center;
+            width: 100%;
+            /* Flexible width */
+        }
+
+        .knob-wrap {
+            width: 26px;
+            height: 26px;
+            position: relative;
+        }
+
+        .knob {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(#333 0deg, #111 180deg, #333 360deg);
+            border: 2px solid #000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            cursor: ns-resize;
+        }
+
+        .knob::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 45%;
+            background: var(--neon-blue);
+            transform-origin: top center;
+            transform: translate(-50%, 0) rotate(180deg);
+        }
+
+        .knob-active::after {
+            background: var(--neon-amber);
+            box-shadow: 0 0 5px var(--neon-amber);
+        }
+
+        .lbl {
+            font-size: 0.4rem;
+            color: #555;
+            margin-top: 2px;
+            text-align: center;
+        }
+
+        /* RIGHT: DRUMS & MASTER */
+        .drum-row {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .drum-unit {
+            flex: 1;
+            background: #151520;
+            border: 1px solid #333;
+            padding: 4px;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .drum-pad {
+            width: 100%;
+            height: 35px;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.6rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .drum-pad.lbl-sm {
+            font-size: 0.5rem;
+        }
+
+        .drum-pad.active {
+            background: var(--neon-amber);
+            color: #000;
+            border-color: #fff;
+        }
+
+        .master-zone {
+            display: flex;
+            gap: 8px;
+            height: 160px;
+        }
+
+        .vis-box {
+            flex: 2;
+            background: #000;
+            border: 1px solid #444;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #vis-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .fader-box {
+            flex: 1;
+            background: #111;
+            border: 1px solid #333;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fader-track {
+            flex: 1;
+            width: 30px;
+            background: #080808;
+            border: 1px solid #333;
+            border-radius: 10px;
+            position: relative;
+            margin: 5px 0;
+        }
+
+        .fader-handle {
+            position: absolute;
+            left: 2px;
+            width: 24px;
+            height: 20px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, #666, #333);
+            bottom: 10%;
+            box-shadow: 0 2px 5px #000;
+            cursor: ns-resize;
+        }
+
+        .btn-dark {
+            padding: 8px;
+            font-size: 0.6rem;
+            font-weight: bold;
+            border: 1px solid #444;
+            background: #1a1a24;
+            color: #666;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 5px;
+            border-radius: 3px;
+            transition: 0.2s;
+        }
+
+        .btn-dark:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .btn-dark.active {
+            background: #000;
+            color: var(--neon-blue);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        @media (max-width: 900px) {
+            .layout-row {
+                flex-direction: column;
+            }
+
+            .data-matrix {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .fx-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            /* Stack drums on very small screens if needed, otherwise keep grid */
+            .drum-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .fx-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .master-zone {
+                height: 220px;
+            }
+
+            .drum-row {
+                margin-bottom: 15px;
+            }
+        }
+
+        .drum-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .footer-info {
+            margin-top: 15px;
+            background: #050510;
+            border: 1px solid #222;
+            padding: 10px;
+            font-size: 0.7rem;
+            color: #555;
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.4;
+        }
+
+        .footer-info h3 {
+            color: var(--neon-blue);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .footer-info p {
+            margin-bottom: 8px;
+        }
+
+        .footer-info b {
+            color: #889;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="star-canvas"></canvas>
+
+    <div class="container">
+        <div class="rack-mount">
+            <header>
+                <h1>Radio Underground</h1>
+                <div class="version">V3.9 PRO DRUMS [UA]</div>
+            </header>
+
+            <div class="layout-row">
+
+                <div class="col-main">
+
+                    <div class="section-box">
+                        <div class="transport-bar">
+                            <button id="playBtn" class="btn-transport">▶ СТАРТ СИСТЕМИ</button>
+                            <button id="stopBtn" class="btn-transport">■ СТОП</button>
+                        </div>
+                        <div class="data-matrix">
+                            <div class="data-item"><span class="data-val" id="d-speed">---</span>ШВИД</div>
+                            <div class="data-item"><span class="data-val" id="d-dens">---</span>ЩІЛН</div>
+                            <div class="data-item"><span class="data-val" id="d-temp">---</span>ТЕМП</div>
+                            <div class="data-item"><span class="data-val" id="d-bt">---</span>MAG BT</div>
+                            <div class="data-item"><span class="data-val" id="d-xray">---</span>XRAY</div>
+                            <div class="data-item"><span class="data-val" id="d-kp">---</span>KP IDX</div>
+                            <div id="cnn-status"
+                                style="grid-column: span 6; text-align:center; font-size:0.6rem; color:#666; margin-top:2px;">
+                                З'ЄДНАННЯ З NOAA...</div>
+                        </div>
+                    </div>
+
+                    <div class="section-box" style="flex:1;">
+                        <div class="section-title">FX МАТРИЦЯ (2 x 6)</div>
+                        <div class="fx-grid">
+
+                            <!-- ROW 1 -->
+                            <div class="fx-unit" style="border-color:#755; background:#1a1010;">
+                                <div class="fx-name" style="color:#faa">BASS</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-bass-tune" data-min="-24" data-max="24"
+                                                data-val="0"></div>
+                                        </div>
+                                        <div class="lbl">TUNE</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-bass-cut" data-min="50" data-max="1000"
+                                                data-val="200"></div>
+                                        </div>
+                                        <div class="lbl">CUT</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit">
+                                <div class="fx-name">OCTAVE</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob knob-active" id="ctrl-oct" data-min="0.25" data-max="2.0"
+                                                data-val="1.0" data-steps="4"></div>
+                                        </div>
+                                        <div class="lbl">SHIFT</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit">
+                                <div class="fx-name">TREM</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-trem-rate" data-min="0.5" data-max="20"
+                                                data-val="6"></div>
+                                        </div>
+                                        <div class="lbl">HZ</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-trem-depth" data-min="0" data-max="1"
+                                                data-val="0"></div>
+                                        </div>
+                                        <div class="lbl">LVL</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit">
+                                <div class="fx-name">CHORUS</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-chor-sd" data-min="0.1" data-max="6"
+                                                data-val="1"></div>
+                                        </div>
+                                        <div class="lbl">HZ</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-chor-dp" data-min="0" data-max="0.005"
+                                                data-val="0"></div>
+                                        </div>
+                                        <div class="lbl">DP</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit">
+                                <div class="fx-name">PHASE</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-phas-rate" data-min="0.1" data-max="10"
+                                                data-val="1"></div>
+                                        </div>
+                                        <div class="lbl">HZ</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-phas-depth" data-min="0" data-max="1000"
+                                                data-val="0"></div>
+                                        </div>
+                                        <div class="lbl">DP</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit">
+                                <div class="fx-name">RING</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-ring-frq" data-min="100" data-max="2000"
+                                                data-val="600"></div>
+                                        </div>
+                                        <div class="lbl">HZ</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-ring-mix" data-min="0" data-max="1" data-val="0">
+                                            </div>
+                                        </div>
+                                        <div class="lbl">MIX</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ROW 2 -->
+                            <div class="fx-unit" style="border-color:#aac;">
+                                <div class="fx-name" style="color:#eef">GLITCH</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-glitch-time" data-min="0.05" data-max="0.5"
+                                                data-val="0.1"></div>
+                                        </div>
+                                        <div class="lbl">TM</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-glitch-mix" data-min="0" data-max="1"
+                                                data-val="0"></div>
+                                        </div>
+                                        <div class="lbl">MIX</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit" style="border-color:#aac;">
+                                <div class="fx-name" style="color:#eef">VOCAL</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-vow-form" data-min="0" data-max="4" data-val="0">
+                                            </div>
+                                        </div>
+                                        <div class="lbl">A-I-U</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-vow-mix" data-min="0" data-max="1" data-val="0">
+                                            </div>
+                                        </div>
+                                        <div class="lbl">MIX</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit" style="border-color:#aac;">
+                                <div class="fx-name" style="color:#eef">SATUR</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-sat-drive" data-min="0" data-max="50"
+                                                data-val="0"></div>
+                                        </div>
+                                        <div class="lbl">HEAT</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit" style="border-color:#aac;">
+                                <div class="fx-name" style="color:#eef">WIDTH</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-wid-amnt" data-min="0" data-max="0.05"
+                                                data-val="0"></div>
+                                        </div>
+                                        <div class="lbl">WIDE</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit" style="border-color:#aac;">
+                                <div class="fx-name" style="color:#eef">PING</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-pp-time" data-min="0.1" data-max="1"
+                                                data-val="0.3"></div>
+                                        </div>
+                                        <div class="lbl">TM</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-pp-fb" data-min="0" data-max="0.8"
+                                                data-val="0.4"></div>
+                                        </div>
+                                        <div class="lbl">FB</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fx-unit" style="border-color:#aac;">
+                                <div class="fx-name" style="color:#eef">ECHO</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-dly-time" data-min="0.1" data-max="1"
+                                                data-val="0.4"></div>
+                                        </div>
+                                        <div class="lbl">TM</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-rev-mix" data-min="0" data-max="1"
+                                                data-val="0.2"></div>
+                                        </div>
+                                        <div class="lbl">REV</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-side">
+                    <div class="section-box">
+                        <div class="section-title" style="display:flex; justify-content:space-between;"><span>РИТМ
+                                ЯДРО</span><span id="bpm-disp" style="color:var(--neon-amber)">120 BPM</span></div>
+
+                        <!-- BPM & VOLUME ROW -->
+                        <div style="display:flex; justify-content:center; gap:15px; margin-bottom:5px;">
+                            <div class="knob-box">
+                                <div class="knob-wrap">
+                                    <div class="knob" id="ctrl-bpm" data-min="60" data-max="180" data-val="120"></div>
+                                </div>
+                                <div class="lbl">BPM</div>
+                            </div>
+                            <div class="knob-box">
+                                <div class="knob-wrap">
+                                    <div class="knob" id="ctrl-drum-vol" data-min="0" data-max="1.5" data-val="1.0">
+                                    </div>
+                                </div>
+                                <div class="lbl">VOL</div>
+                            </div>
+                        </div>
+
+                        <div class="drum-row">
+                            <!-- KICK -->
+                            <div class="drum-unit">
+                                <div class="drum-pad" id="pad-kick">KICK</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-kick-tune" data-min="40" data-max="100"
+                                                data-val="60" style="transform:scale(0.8)"></div>
+                                        </div>
+                                        <div class="lbl">TUNE</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-kick-vol" data-min="0" data-max="1.5"
+                                                data-val="1.0" style="transform:scale(0.8)"></div>
+                                        </div>
+                                        <div class="lbl">VOL</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- PERC -->
+                            <div class="drum-unit">
+                                <div class="drum-pad" id="pad-perc">PERC</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-perc-tune" data-min="200" data-max="800"
+                                                data-val="400" style="transform:scale(0.8)"></div>
+                                        </div>
+                                        <div class="lbl">PITCH</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-perc-vol" data-min="0" data-max="1.5"
+                                                data-val="0.7" style="transform:scale(0.8)"></div>
+                                        </div>
+                                        <div class="lbl">VOL</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- SNARE -->
+                            <div class="drum-unit">
+                                <div class="drum-pad" id="pad-snare">SNARE</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-snare-tone" data-min="100" data-max="1000"
+                                                data-val="400" style="transform:scale(0.8)"></div>
+                                        </div>
+                                        <div class="lbl">TONE</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-snare-vol" data-min="0" data-max="1.5"
+                                                data-val="0.6" style="transform:scale(0.8)"></div>
+                                        </div>
+                                        <div class="lbl">VOL</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- HAT -->
+                            <div class="drum-unit">
+                                <div class="drum-pad" id="pad-hat">HAT</div>
+                                <div class="knob-row">
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-hat-col" data-min="1000" data-max="10000"
+                                                data-val="5000" style="transform:scale(0.8)"></div>
+                                        </div>
+                                        <div class="lbl">FILT</div>
+                                    </div>
+                                    <div class="knob-box">
+                                        <div class="knob-wrap">
+                                            <div class="knob" id="ctrl-hat-vol" data-min="0" data-max="1.5"
+                                                data-val="0.3" style="transform:scale(0.8)"></div>
+                                        </div>
+                                        <div class="lbl">VOL</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-box" style="flex:1; display:flex; flex-direction:column;">
+                        <div class="section-title">МАЙСТЕР</div>
+                        <div class="master-zone">
+                            <div class="vis-box"><canvas id="vis-canvas"></canvas></div>
+                            <div class="fader-box">
+                                <div class="fader-track" id="vol-fader">
+                                    <div class="fader-handle" id="vol-handle"></div>
+                                </div>
+                                <div style="font-size:0.6rem; color:#fff;" id="vol-val">80%</div>
+                                <button class="btn-dark" id="btn-float">AUTO</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="footer-info">
+                <h3>СИСТЕМНА АРХІТЕКТУРА RADIO UNDERGROUND</h3>
+                <p><b>КОНЦЕПЦІЯ:</b> Це генеративний веб-синтезатор, що використовує реальні дані космічної погоди
+                    (NOAA) для модуляції звукового рушія. Швидкість сонячного вітру, щільність протонів, рентгенівське
+                    випромінювання та магнітне поле Землі впливають на базову частоту, глибину модуляції та параметри
+                    фільтрів у реальному часі.</p>
+                <p><b>ЗВУКОВИЙ РУШІЙ (Web Audio API):</b>
+                    1. <b>Генератори (Sources):</b> Основний синус-осцилятор (Atmosphere) та трикутник (Bass Drone).
+                    2. <b>FX Матриця (2x6):</b> Сигнал проходить через ланцюг ефектів: Ring Mod -> Phaser (Allpass
+                    cascade) -> Glitch (Random stutter) -> Vowel Formant Filter (A-I-U) -> Saturation (Waveshapper) ->
+                    Tremolo -> Chorus -> Stereo Width -> PingPong Delay -> Reverb (Convolution).
+                    3. <b>Ритм Ядро:</b> 4-канальний драм-секвенсор (Kick, Perc, Snare, Hat) з синтезованими звуками
+                    (Oscillators + Noise Buffers). Кожен канал має налаштування тону/фільтру та незалежну гучність.</p>
+                <p><b>РЕЖИМИ:</b> Якщо API NOAA недоступне, система автоматично перемикається в режим симуляції (Data
+                    Simulation), генеруючи псевдовипадкові дані для демонстрації можливостей.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cvs = document.getElementById('star-canvas'), ctx = cvs.getContext('2d');
+        let w, h, pts = []; function rsz() { w = window.innerWidth; h = window.innerHeight; cvs.width = w; cvs.height = h; pts = Array(80).fill().map(() => ({ x: Math.random() * w, y: Math.random() * h, s: Math.random() * 2, v: Math.random() * 0.3 + 0.1, a: Math.random() })); } window.addEventListener('resize', rsz); rsz(); function anim() { ctx.fillStyle = 'rgba(5,5,15,0.2)'; ctx.fillRect(0, 0, w, h); pts.forEach(p => { p.y += p.v; if (p.y > h) p.y = 0; ctx.fillStyle = `rgba(180,220,255,${p.a})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.28); ctx.fill(); }); requestAnimationFrame(anim); } anim();
+
+        const vCvs = document.getElementById('vis-canvas'), vCtx = vCvs.getContext('2d');
+        let actx, masterGain, analyser, dataArray;
+        function setupVisualizer() { if (!actx) return; analyser = actx.createAnalyser(); analyser.fftSize = 64; dataArray = new Uint8Array(analyser.frequencyBinCount); masterGain.connect(analyser); drawVis(); }
+        function drawVis() { if (!analyser) return; requestAnimationFrame(drawVis); analyser.getByteFrequencyData(dataArray); vCtx.fillStyle = '#000'; vCtx.fillRect(0, 0, vCvs.width, vCvs.height); const bW = (vCvs.width / analyser.frequencyBinCount) * 2.5; let x = 0; for (let i = 0; i < analyser.frequencyBinCount; i++) { const h = dataArray[i] / 2; vCtx.fillStyle = `rgb(${h + 50},50,${255 - h})`; vCtx.fillRect(x, vCvs.height - h, bW, h); x += bW + 1; } }
+
+        let mainOsc, mainGain, distNode, filtNode, bassOsc, bassGain, bassFilt, tremOsc, tremGain, protonOsc, protonGain, fxIn;
+        let ringOsc, ringGain, glitchGain, vowF1, vowF2, vowF3, vowMix, satShaper, tremFXOsc, tremFXDepth, tremFXGain, chorNode, chorLFO, chorDepth, phasNode1, phasNode2, phasLFO, phasDepth, widDly, ppDlyL, ppDlyR, ppFb, dlyNode, dlyFb, revNode, revGain;
+        let octaveMult = 1.0, bassFreqMult = 1.0, glitchTime = 0.1, glitchMix = 0, glitchTimer;
+        let drumGain; // DEDICATED DRUM GAIN
+
+        function makeDisture(k) { const c = new Float32Array(44100), d = Math.PI / 180; for (let i = 0; i < 44100; ++i) { let x = i * 2 / 44100 - 1; c[i] = (3 + k) * x * 20 * d / (Math.PI + k * Math.abs(x)); } return c; }
+        function fillReverbImpulse() { const l = 44100 * 2, b = actx.createBuffer(2, l, 44100); for (let c = 0; c < 2; c++) { let d = b.getChannelData(c); for (let i = 0; i < l; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / l, 2); } revNode.buffer = b; }
+
+        function buildGraph() {
+            if (actx) return; actx = new (window.AudioContext || window.webkitAudioContext)(); masterGain = actx.createGain(); masterGain.connect(actx.destination); setupVisualizer(); fxIn = actx.createGain();
+            drumGain = actx.createGain(); drumGain.gain.value = 1.0; drumGain.connect(masterGain);
+
+            // 1. Ring
+            const ringIn = actx.createGain(); fxIn.connect(ringIn); ringOsc = actx.createOscillator(); ringOsc.frequency.value = 600; ringOsc.start(); const rMod = actx.createGain(); rMod.gain.value = 0; ringOsc.connect(rMod.gain); ringGain = actx.createGain(); ringGain.gain.value = 0; ringIn.connect(rMod).connect(ringGain); const ringDry = actx.createGain(); ringIn.connect(ringDry); const ringOut = actx.createGain(); ringDry.connect(ringOut); ringGain.connect(ringOut);
+            // ... (Remaining Graph preserved exactly as V3.8) ...
+            // 2. Phase
+            phasNode1 = actx.createBiquadFilter(); phasNode1.type = "allpass"; phasNode2 = actx.createBiquadFilter(); phasNode2.type = "allpass"; phasLFO = actx.createOscillator(); phasLFO.frequency.value = 1; phasLFO.start(); phasDepth = actx.createGain(); phasDepth.gain.value = 0; phasLFO.connect(phasDepth).connect(phasNode1.frequency); phasDepth.connect(phasNode2.frequency); const pWet = actx.createGain(); ringOut.connect(phasNode1).connect(phasNode2).connect(pWet); const pOut = actx.createGain(); ringOut.connect(pOut); pWet.connect(pOut);
+
+            // 3. Glitch
+            glitchGain = actx.createGain(); pOut.connect(glitchGain); startGlitch();
+
+            // 4. Vowel
+            const vIn = actx.createGain(); glitchGain.connect(vIn); vowF1 = actx.createBiquadFilter(); vowF1.type = 'bandpass'; vowF1.Q.value = 5; vowF2 = actx.createBiquadFilter(); vowF2.type = 'bandpass'; vowF2.Q.value = 5; vowF3 = actx.createBiquadFilter(); vowF3.type = 'bandpass'; vowF3.Q.value = 5; vowMix = actx.createGain(); vowMix.gain.value = 0; vIn.connect(vowF1).connect(vowMix); vIn.connect(vowF2).connect(vowMix); vIn.connect(vowF3).connect(vowMix); const vDry = actx.createGain(); vIn.connect(vDry); const vOut = actx.createGain(); vDry.connect(vOut); vowMix.connect(vOut); makeVowel(0);
+
+            // 5. Satur
+            satShaper = actx.createWaveShaper(); satShaper.curve = makeDisture(0); vOut.connect(satShaper);
+
+            // 6. TremFX
+            tremFXGain = actx.createGain(); tremFXOsc = actx.createOscillator(); tremFXOsc.frequency.value = 6; tremFXOsc.start(); tremFXDepth = actx.createGain(); tremFXDepth.gain.value = 0; tremFXOsc.connect(tremFXDepth).connect(tremFXGain.gain); satShaper.connect(tremFXGain);
+
+            // 7. Chorus
+            chorNode = actx.createDelay(); chorNode.delayTime.value = 0.03; chorLFO = actx.createOscillator(); chorLFO.frequency.value = 1.5; chorLFO.start(); chorDepth = actx.createGain(); chorDepth.gain.value = 0; chorLFO.connect(chorDepth).connect(chorNode.delayTime); const cDry = actx.createGain(); tremFXGain.connect(cDry); const cWet = actx.createGain(); tremFXGain.connect(chorNode).connect(cWet); const cOut = actx.createGain(); cDry.connect(cOut); cWet.connect(cOut);
+
+            // 8. Width
+            const wSpl = actx.createChannelSplitter(2); const wMrg = actx.createChannelMerger(2); widDly = actx.createDelay(); widDly.delayTime.value = 0; cOut.connect(wSpl); wSpl.connect(wMrg, 0, 0); wSpl.connect(widDly, 1).connect(wMrg, 0, 1);
+
+            // 9. PingPong
+            const ppSpl = actx.createChannelSplitter(2); wMrg.connect(ppSpl); ppDlyL = actx.createDelay(); ppDlyR = actx.createDelay(); ppFb = actx.createGain(); ppFb.gain.value = 0; ppDlyL.connect(ppDlyR).connect(ppFb).connect(ppDlyL); const ppMrg = actx.createChannelMerger(2); ppSpl.connect(ppDlyL, 0).connect(ppMrg, 0, 0); ppSpl.connect(ppDlyR, 1).connect(ppMrg, 0, 1); wMrg.connect(ppMrg);
+
+            // 10. GlobalOut
+            dlyNode = actx.createDelay(); dlyNode.delayTime.value = 0.4; dlyFb = actx.createGain(); dlyFb.gain.value = 0.3; dlyNode.connect(dlyFb).connect(dlyNode); revNode = actx.createConvolver(); fillReverbImpulse(); revGain = actx.createGain(); revGain.gain.value = 0.2; const fin = actx.createGain(); ppMrg.connect(fin); ppMrg.connect(dlyNode).connect(fin); fin.connect(revNode).connect(revGain).connect(masterGain); fin.connect(masterGain);
+
+            // Sources
+            mainOsc = actx.createOscillator(); mainOsc.type = 'sine'; mainGain = actx.createGain(); mainGain.gain.value = 0.4; distNode = actx.createWaveShaper(); distNode.curve = makeDisture(0); filtNode = actx.createBiquadFilter(); filtNode.type = 'lowpass'; filtNode.frequency.value = 2000; mainOsc.connect(distNode).connect(filtNode).connect(mainGain).connect(fxIn); mainOsc.start();
+            bassOsc = actx.createOscillator(); bassOsc.type = 'triangle'; bassGain = actx.createGain(); bassGain.gain.value = 0.3; bassFilt = actx.createBiquadFilter(); bassFilt.type = 'lowpass'; bassFilt.frequency.value = 300; bassOsc.connect(bassFilt).connect(bassGain).connect(fxIn); bassOsc.start();
+            tremOsc = actx.createOscillator(); tremOsc.frequency.value = 7; tremOsc.start(); tremGain = actx.createGain(); tremGain.gain.value = 0; tremOsc.connect(tremGain).connect(mainGain.gain);
+            protonOsc = actx.createOscillator(); protonOsc.start(); protonGain = actx.createGain(); protonGain.gain.value = 0; protonOsc.connect(protonGain).connect(fxIn);
+        }
+
+        function startGlitch() { if (!actx) return; function t() { if (glitchMix > 0.05 && Math.random() < glitchMix) { const d = glitchTime * (0.5 + Math.random()); glitchGain.gain.setTargetAtTime(0, actx.currentTime, 0.01); glitchGain.gain.setTargetAtTime(1, actx.currentTime + d * 0.8, 0.01); glitchTimer = setTimeout(t, d * 1000); } else { glitchGain.gain.setTargetAtTime(1, actx.currentTime, 0.01); glitchTimer = setTimeout(t, 200); } } t(); }
+        const vows = [{ f1: 730, f2: 1090, f3: 2440 }, { f1: 270, f2: 2290, f3: 3010 }, { f1: 300, f2: 870, f3: 2240 }, { f1: 530, f2: 1840, f3: 2480 }, { f1: 570, f2: 840, f3: 2410 }];
+        function makeVowel(v) { if (!vowF1) return; const i = Math.floor(v), m = v - i, n = (i + 1) % 5, v1 = vows[i], v2 = vows[n], l = (a, b) => a + (b - a) * m; vowF1.frequency.setTargetAtTime(l(v1.f1, v2.f1), actx.currentTime, 0.1); vowF2.frequency.setTargetAtTime(l(v1.f2, v2.f2), actx.currentTime, 0.1); vowF3.frequency.setTargetAtTime(l(v1.f3, v2.f3), actx.currentTime, 0.1); }
+
+        async function loop() {
+            let d = { s: 400, d: 5, t: 50000, bt: 5, kp: 3, x: 1e-8, live: false };
+            const ts = Date.now() / 1000;
+            try {
+                const rw = await fetch('https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json').then(r => r.json()).catch(() => null);
+                const w = rw ? rw.slice(-1)[0] : null;
+                const rm = await fetch('https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json').then(r => r.json()).catch(() => null);
+                const m = rm ? rm.slice(-1)[0] : null;
+                const rk = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json').then(r => r.json()).catch(() => null);
+                let kp = 3; if (rk && Array.isArray(rk)) { const last = rk[rk.length - 1]; kp = parseFloat(last[1]); }
+                const rx = await fetch('https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json').then(r => r.json()).catch(() => null);
+                let xr = 1e-8; if (rx && Array.isArray(rx)) { const rec = rx.filter(x => x.energy === '0.1-0.8nm').slice(-1)[0]; if (rec) xr = rec.flux; }
+
+                if (w) { d = { s: w.proton_speed, d: w.proton_density, t: w.proton_temperature, bt: m ? m.bt : 5, kp: kp, x: xr, live: true }; }
+                else { throw "No data"; }
+            } catch (e) { d = { s: 400 + Math.sin(ts * 0.05) * 30, d: 5 + Math.cos(ts * 0.02) * 2, t: 50000 + Math.sin(ts * 0.01) * 5000, bt: 5, kp: 3, x: 1e-8, live: false }; }
+
+            const el = (i, v) => document.getElementById(i).innerText = v;
+            el('d-speed', d.s ? d.s.toFixed(0) : '--');
+            el('d-dens', d.d ? d.d.toFixed(1) : '--');
+            el('d-temp', d.t ? (d.t / 1000).toFixed(0) + 'k' : '--');
+            el('d-bt', d.bt ? d.bt.toFixed(1) : '--');
+            el('d-kp', d.kp);
+            el('d-xray', d.x > 1e-5 ? 'HIGH' : 'LO');
+
+            const st = document.getElementById('cnn-status');
+            if (d.live) { st.innerText = "NOAA LIVE DATA"; st.style.color = "#0f0"; }
+            else { st.innerText = "DATA OFFLINE (SIMULATED)"; st.style.color = "#fa0"; }
+
+            if (!actx) return;
+            const now = actx.currentTime + 0.1;
+
+            // SAFETY CHECK: Ensure data is valid numbers
+            const safeS = (isNaN(d.s) || !isFinite(d.s)) ? 400 : d.s;
+            const safeBt = (isNaN(d.bt) || !isFinite(d.bt)) ? 5 : d.bt;
+
+            const mainFreq = (220 + (safeS - 300) / 500 * 780) * octaveMult;
+            const bassFreq = (65 + safeBt * 12) * Math.pow(2, bassFreqMult / 12);
+
+            if (isFinite(mainFreq) && mainFreq > 0) {
+                mainOsc.frequency.linearRampToValueAtTime(mainFreq, now);
+            }
+            if (isFinite(bassFreq) && bassFreq > 0) {
+                bassOsc.frequency.linearRampToValueAtTime(bassFreq, now);
+            }
+
+            if (floatLFO) { floatTime += 0.02; setFader(0.6 + Math.sin(floatTime) * 0.2); }
+        }
+
+        // UI & KNOBS
+        let floatLFO = false, floatTime = 0, masterVol = 0.8;
+        function setFader(p) { masterVol = p; if (masterGain) masterGain.gain.setTargetAtTime(p, actx.currentTime, 0.1); document.getElementById('vol-handle').style.bottom = (p * 100) + '%'; document.getElementById('vol-val').innerText = Math.round(p * 100) + '%'; }
+        document.getElementById('btn-float').addEventListener('click', e => { floatLFO = !floatLFO; e.target.classList.toggle('active'); });
+        document.getElementById('vol-fader').addEventListener('mousedown', e => { const r = e.target.getBoundingClientRect(); const mv = ev => { setFader(1 - (Math.max(0, Math.min(r.height, ev.clientY - r.top)) / r.height)); }; window.addEventListener('mousemove', mv); window.addEventListener('mouseup', () => { window.removeEventListener('mousemove', mv) }); });
+
+        // Drum
+        let isPlaying = false;
+        document.getElementById('playBtn').addEventListener('click', () => { buildGraph(); actx.resume(); setInterval(loop, 5000); loop(); nextNoteTime = actx.currentTime; schedule(); isPlaying = true; });
+        document.getElementById('stopBtn').addEventListener('click', () => location.reload());
+
+        document.querySelectorAll('.knob').forEach(k => {
+            k.addEventListener('mousedown', e => {
+                let startY = e.clientY; const min = parseFloat(k.dataset.min), max = parseFloat(k.dataset.max); let val = parseFloat(k.dataset.val);
+                const mv = ev => {
+                    let nv = Math.max(min, Math.min(max, val + (startY - ev.clientY) * ((max - min) / 200)));
+                    if (k.dataset.steps) { const s = (max - min) / k.dataset.steps; nv = Math.round(nv / s) * s; }
+                    k.dataset.val = nv; k.style.transform = `rotate(${((nv - min) / (max - min) * 270) - 135}deg)`;
+                    if (!actx) return; const id = k.id, t = actx.currentTime;
+                    // Full Mappings (Condensed)
+                    if (id === 'ctrl-bass-tune') bassFreqMult = nv; if (id === 'ctrl-bass-cut') bassFilt.frequency.setTargetAtTime(nv, t, 0.1);
+                    if (id === 'ctrl-oct') octaveMult = nv;
+                    if (id === 'ctrl-trem-rate') tremFXOsc.frequency.setTargetAtTime(nv, t, 0.1); if (id === 'ctrl-trem-depth') tremFXDepth.gain.setTargetAtTime(nv, t, 0.1);
+                    if (id === 'ctrl-chor-sd') chorLFO.frequency.setTargetAtTime(nv, t, 0.1); if (id === 'ctrl-chor-dp') chorDepth.gain.setTargetAtTime(nv, t, 0.1);
+                    if (id === 'ctrl-phas-rate') phasLFO.frequency.setTargetAtTime(nv, t, 0.1); if (id === 'ctrl-phas-depth') phasDepth.gain.setTargetAtTime(nv, t, 0.1);
+                    if (id === 'ctrl-ring-frq') ringOsc.frequency.setTargetAtTime(nv, t, 0.1); if (id === 'ctrl-ring-mix') ringGain.gain.setTargetAtTime(nv, t, 0.1);
+                    if (id === 'ctrl-glitch-time') glitchTime = nv; if (id === 'ctrl-glitch-mix') glitchMix = nv;
+                    if (id === 'ctrl-vow-form') makeVowel(nv); if (id === 'ctrl-vow-mix') vowMix.gain.setTargetAtTime(nv, t, 0.1);
+                    if (id === 'ctrl-sat-drive') satShaper.curve = makeDisture(nv);
+                    if (id === 'ctrl-wid-amnt') widDly.delayTime.setTargetAtTime(nv, t, 0.1);
+                    if (id === 'ctrl-pp-time') { ppDlyL.delayTime.setTargetAtTime(nv, t, 0.1); ppDlyR.delayTime.setTargetAtTime(nv * 1.5, t, 0.1); } if (id === 'ctrl-pp-fb') ppFb.gain.setTargetAtTime(nv, t, 0.1);
+                    if (id === 'ctrl-dly-time') dlyNode.delayTime.setTargetAtTime(nv, t, 0.1); if (id === 'ctrl-rev-mix') revGain.gain.setTargetAtTime(nv, t, 0.1);
+
+                    if (id === 'ctrl-kick-tune') kickTune = nv; if (id === 'ctrl-perc-tune') percTune = nv; if (id === 'ctrl-snare-tone') snareTone = nv; if (id === 'ctrl-hat-col') hatCol = nv;
+                    if (id === 'ctrl-kick-vol') kickVol = nv; if (id === 'ctrl-perc-vol') percVol = nv; if (id === 'ctrl-snare-vol') snareVol = nv; if (id === 'ctrl-hat-vol') hatVol = nv;
+                    if (id === 'ctrl-bpm') { tempo = nv; document.getElementById('bpm-disp').innerText = Math.round(nv) + " BPM"; }
+
+                    // DRUM VOL
+                    if (id === 'ctrl-drum-vol') drumGain.gain.setTargetAtTime(nv, t, 0.1);
+                };
+                window.addEventListener('mousemove', mv); window.addEventListener('mouseup', () => { window.removeEventListener('mousemove', mv) });
+            });
+            const min = parseFloat(k.dataset.min), max = parseFloat(k.dataset.max), val = parseFloat(k.dataset.val);
+            k.style.transform = `rotate(${((val - min) / (max - min) * 270) - 135}deg)`;
+        });
+        ['kick', 'perc', 'snare', 'hat'].forEach(k => document.getElementById('pad-' + k).addEventListener('click', e => { drumState[k[0]] = !drumState[k[0]]; e.target.classList.toggle('active'); }));
+
+        // DRUM LOGIC (V3.9)
+        let nextNoteTime = 0, beatCount = 0, tempo = 120, drumState = { k: false, p: false, s: false, h: false };
+        let kickTune = 60, percTune = 400, snareTone = 400, hatCol = 5000;
+        let kickVol = 1.0, percVol = 0.7, snareVol = 0.6, hatVol = 0.3;
+        function nextNote() { nextNoteTime += (60.0 / tempo) * 0.25; beatCount = (beatCount + 1) % 16; }
+        function schedule() { while (nextNoteTime < actx.currentTime + 0.1) { playDrums(beatCount, nextNoteTime); nextNote(); } setTimeout(schedule, 25); }
+        function playDrums(b, t) {
+            // HARD TECHNO KICK
+            if (drumState.k && (b % 4 === 0)) {
+                const o = actx.createOscillator(), g = actx.createGain();
+                o.frequency.setValueAtTime(kickTune, t);
+                o.frequency.exponentialRampToValueAtTime(30, t + 0.1);
+                o.connect(g).connect(drumGain); // Route to MASTER DRUM GAIN
+                o.start(t); o.stop(t + 0.2);
+                g.gain.setValueAtTime(kickVol, t);
+                g.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+            }
+            // PERC (WOODBLOCK/BONGO)
+            if (drumState.p && (b % 4 === 2)) {
+                const o = actx.createOscillator(), g = actx.createGain();
+                o.type = 'sine';
+                o.frequency.setValueAtTime(percTune, t); // Start high
+                o.frequency.exponentialRampToValueAtTime(percTune / 2, t + 0.05); // Snap down
+                o.connect(g).connect(drumGain);
+                o.start(t); o.stop(t + 0.1);
+                g.gain.setValueAtTime(percVol, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            }
+            // SNARE
+            if (drumState.s && (b % 8 === 4)) {
+                const n = actx.createBufferSource(), g = actx.createGain(), f = actx.createBiquadFilter();
+                f.frequency.value = snareTone;
+                n.connect(f).connect(g).connect(drumGain);
+                const b = actx.createBuffer(1, 22000, 44100); const d = b.getChannelData(0); for (let i = 0; i < 22000; i++)d[i] = Math.random() * 2 - 1;
+                n.buffer = b; n.start(t);
+                g.gain.setValueAtTime(snareVol, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+            }
+            // HAT
+            if (drumState.h && (b % 2 === 0)) {
+                const n = actx.createBufferSource(), g = actx.createGain(), f = actx.createBiquadFilter();
+                f.type = 'highpass'; f.frequency.value = hatCol;
+                n.connect(f).connect(g).connect(drumGain);
+                const b = actx.createBuffer(1, 4000, 44100); const d = b.getChannelData(0); for (let i = 0; i < 4000; i++)d[i] = Math.random() * 2 - 1;
+                n.buffer = b; n.start(t);
+                g.gain.setValueAtTime(hatVol, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+            }
+        }
+    </script>
+</body>
+
+</html>

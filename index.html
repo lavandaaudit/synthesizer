@@ -870,8 +870,25 @@
         let octaveMult = 1.0, bassFreqMult = 1.0, glitchTime = 0.1, glitchMix = 0, glitchTimer;
         let drumGain; // DEDICATED DRUM GAIN
 
-        function makeDisture(k) { const c = new Float32Array(44100), d = Math.PI / 180; for (let i = 0; i < 44100; ++i) { let x = i * 2 / 44100 - 1; c[i] = (3 + k) * x * 20 * d / (Math.PI + k * Math.abs(x)); } return c; }
-        function fillReverbImpulse() { const l = 44100 * 2, b = actx.createBuffer(2, l, 44100); for (let c = 0; c < 2; c++) { let d = b.getChannelData(c); for (let i = 0; i < l; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / l, 2); } revNode.buffer = b; }
+        function makeDisture(k) {
+            const sr = actx ? actx.sampleRate : 44100;
+            const c = new Float32Array(sr), d = Math.PI / 180;
+            for (let i = 0; i < sr; ++i) {
+                let x = i * 2 / sr - 1;
+                c[i] = (3 + k) * x * 20 * d / (Math.PI + k * Math.abs(x));
+            }
+            return c;
+        }
+        function fillReverbImpulse() {
+            if (!actx) return;
+            const sr = actx.sampleRate;
+            const l = sr * 2, b = actx.createBuffer(2, l, sr);
+            for (let c = 0; c < 2; c++) {
+                let d = b.getChannelData(c);
+                for (let i = 0; i < l; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / l, 2);
+            }
+            revNode.buffer = b;
+        }
 
         function buildGraph() {
             if (actx) return; actx = new (window.AudioContext || window.webkitAudioContext)(); masterGain = actx.createGain(); masterGain.connect(actx.destination); setupVisualizer(); fxIn = actx.createGain();
@@ -879,7 +896,7 @@
 
             // 1. Ring
             const ringIn = actx.createGain(); fxIn.connect(ringIn); ringOsc = actx.createOscillator(); ringOsc.frequency.value = 600; ringOsc.start(); const rMod = actx.createGain(); rMod.gain.value = 0; ringOsc.connect(rMod.gain); ringGain = actx.createGain(); ringGain.gain.value = 0; ringIn.connect(rMod).connect(ringGain); const ringDry = actx.createGain(); ringIn.connect(ringDry); const ringOut = actx.createGain(); ringDry.connect(ringOut); ringGain.connect(ringOut);
-            // ... (Remaining Graph preserved exactly as V3.8) ...
+
             // 2. Phase
             phasNode1 = actx.createBiquadFilter(); phasNode1.type = "allpass"; phasNode2 = actx.createBiquadFilter(); phasNode2.type = "allpass"; phasLFO = actx.createOscillator(); phasLFO.frequency.value = 1; phasLFO.start(); phasDepth = actx.createGain(); phasDepth.gain.value = 0; phasLFO.connect(phasDepth).connect(phasNode1.frequency); phasDepth.connect(phasNode2.frequency); const pWet = actx.createGain(); ringOut.connect(phasNode1).connect(phasNode2).connect(pWet); const pOut = actx.createGain(); ringOut.connect(pOut); pWet.connect(pOut);
 
@@ -1070,7 +1087,8 @@
                 const n = actx.createBufferSource(), g = actx.createGain(), f = actx.createBiquadFilter();
                 f.frequency.value = snareTone;
                 n.connect(f).connect(g).connect(drumGain);
-                const b = actx.createBuffer(1, 22000, 44100); const d = b.getChannelData(0); for (let i = 0; i < 22000; i++)d[i] = Math.random() * 2 - 1;
+                const len = actx.sampleRate * 0.5; // 0.5s noise
+                const b = actx.createBuffer(1, len, actx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < len; i++)d[i] = Math.random() * 2 - 1;
                 n.buffer = b; n.start(t);
                 g.gain.setValueAtTime(snareVol, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
             }
@@ -1079,7 +1097,8 @@
                 const n = actx.createBufferSource(), g = actx.createGain(), f = actx.createBiquadFilter();
                 f.type = 'highpass'; f.frequency.value = hatCol;
                 n.connect(f).connect(g).connect(drumGain);
-                const b = actx.createBuffer(1, 4000, 44100); const d = b.getChannelData(0); for (let i = 0; i < 4000; i++)d[i] = Math.random() * 2 - 1;
+                const len = actx.sampleRate * 0.1; // 0.1s noise
+                const b = actx.createBuffer(1, len, actx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < len; i++)d[i] = Math.random() * 2 - 1;
                 n.buffer = b; n.start(t);
                 g.gain.setValueAtTime(hatVol, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
             }

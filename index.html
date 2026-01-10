@@ -958,10 +958,10 @@
             const bassFreq = (65 + safeBt * 12) * Math.pow(2, bassFreqMult / 12);
 
             if (isFinite(mainFreq) && mainFreq > 0) {
-                mainOsc.frequency.linearRampToValueAtTime(mainFreq, now);
+                mainOsc.frequency.setTargetAtTime(mainFreq, now, 0.1);
             }
             if (isFinite(bassFreq) && bassFreq > 0) {
-                bassOsc.frequency.linearRampToValueAtTime(bassFreq, now);
+                bassOsc.frequency.setTargetAtTime(bassFreq, now, 0.1);
             }
 
             if (floatLFO) { floatTime += 0.02; setFader(0.6 + Math.sin(floatTime) * 0.2); }
@@ -975,14 +975,19 @@
 
         // Drum
         let isPlaying = false;
-        document.getElementById('playBtn').addEventListener('click', () => { buildGraph(); actx.resume(); setInterval(loop, 5000); loop(); nextNoteTime = actx.currentTime; schedule(); isPlaying = true; });
+        const playBtn = document.getElementById('playBtn');
+        const startAudio = () => { buildGraph(); actx.resume(); setInterval(loop, 5000); loop(); nextNoteTime = actx.currentTime; schedule(); isPlaying = true; };
+        playBtn.addEventListener('click', startAudio);
+        playBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startAudio(); }, { passive: false });
+
         document.getElementById('stopBtn').addEventListener('click', () => location.reload());
+        document.getElementById('stopBtn').addEventListener('touchstart', (e) => { e.preventDefault(); location.reload(); }, { passive: false });
 
         document.querySelectorAll('.knob').forEach(k => {
-            k.addEventListener('mousedown', e => {
-                let startY = e.clientY; const min = parseFloat(k.dataset.min), max = parseFloat(k.dataset.max); let val = parseFloat(k.dataset.val);
-                const mv = ev => {
-                    let nv = Math.max(min, Math.min(max, val + (startY - ev.clientY) * ((max - min) / 200)));
+            const handleInput = (e, clientY) => {
+                let startY = clientY; const min = parseFloat(k.dataset.min), max = parseFloat(k.dataset.max); let val = parseFloat(k.dataset.val);
+                const mv = (evY) => {
+                    let nv = Math.max(min, Math.min(max, val + (startY - evY) * ((max - min) / 200)));
                     if (k.dataset.steps) { const s = (max - min) / k.dataset.steps; nv = Math.round(nv / s) * s; }
                     k.dataset.val = nv; k.style.transform = `rotate(${((nv - min) / (max - min) * 270) - 135}deg)`;
                     if (!actx) return; const id = k.id, t = actx.currentTime;
@@ -1007,8 +1012,27 @@
                     // DRUM VOL
                     if (id === 'ctrl-drum-vol') drumGain.gain.setTargetAtTime(nv, t, 0.1);
                 };
-                window.addEventListener('mousemove', mv); window.addEventListener('mouseup', () => { window.removeEventListener('mousemove', mv) });
+                return mv;
+            };
+
+            // Mouse
+            k.addEventListener('mousedown', e => {
+                const moveFunc = handleInput(e, e.clientY);
+                const onMove = ev => moveFunc(ev.clientY);
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', () => window.removeEventListener('mousemove', onMove));
             });
+
+            // Touch
+            k.addEventListener('touchstart', e => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const moveFunc = handleInput(e, touch.clientY);
+                const onMove = ev => moveFunc(ev.touches[0].clientY);
+                window.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('touchend', () => window.removeEventListener('touchmove', onMove));
+            }, { passive: false });
+
             const min = parseFloat(k.dataset.min), max = parseFloat(k.dataset.max), val = parseFloat(k.dataset.val);
             k.style.transform = `rotate(${((val - min) / (max - min) * 270) - 135}deg)`;
         });
